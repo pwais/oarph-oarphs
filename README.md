@@ -13,3 +13,8 @@ def foo():
   return 5
 ```
 
+```c++
+struct moof {
+  int a;
+};
+```
