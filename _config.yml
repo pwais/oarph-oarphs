@@ -1,3 +1,4 @@
 theme: jekyll-theme-tactile
 title: oarph oarph title
 show_downloads: false
+permalink: /:title
