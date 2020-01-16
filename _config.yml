@@ -1,3 +1,5 @@
 theme: jekyll-theme-tactile
 title: oarph oarph title
 show_downloads: false
+theme_settings:
+  post_navigation: True
