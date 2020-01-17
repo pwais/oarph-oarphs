@@ -9,3 +9,5 @@ layout: default
     </li>
   {% endfor %}
 </ul>
+
+<img src="{site.baseurl}/oarphoarph_alpha.png" width="100" height="100" />
