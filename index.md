@@ -10,4 +10,4 @@ layout: default
   {% endfor %}
 </ul>
 
-<img src="{site.baseurl}/oarphoarph_alpha.png" width="100" height="100" />
+<img src="{{site.baseurl}}/assets/images/oarphoarph_alpha.png" width="100" height="100" />
