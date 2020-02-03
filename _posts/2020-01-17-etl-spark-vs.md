@@ -1,13 +1,72 @@
 ---
 layout: post
-title: "Python ETL Leaderboard"
+title: "ETL: Spark versus ..."
 date: 2020-01-20 17:00
 author: pwais
 ---
 
-This page strives to be a living document comparing various Python-centric ETL tools.
+This post strives to describe how [Spark](https://spark.apache.org/) functions as an [ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) tool and provide citations comparing it to other such tools like Ray, Beam, Dask, etc.
 
-** include beam, note Google engineers pushing.  Beam is slow paper: https://arxiv.org/pdf/1907.08302.pdf 
+## Spark in a Nutshell
+
+### From MapReduce ... 
+
+Spark is popularly known as an open source implementation of [MapReduce](http://stevekrenzel.com/finding-friends-with-mapreduce).  Historically, MapReduce has been used to build analytics jobs on large, distributed datasets that could not otherwise be queried using an SQL engine. For example, in a database of email addresses, one could compute the top N most frequent email domains (e.g. `yahoo.com`) using a simple SQL query.  If the data were very large and distributed, one could use MapReduce to define a Map of email address to domain (e.g.  `me@yahoo.com` -> `yahoo.com`) and a Reduce that groups results with the same domain and counts them.  In 2004, when MapReduce was first [published](https://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf), the MapReduce solution to this problem was novel and challenges included tuning performance and generalizing the job to support a variety of queries.  By 2012, Spark and other tools have provided [well-optimized SQL interfaces](https://pages.databricks.com/rs/094-YMS-629/images/1211.6176.pdf) to distributed data.  One can apply [Spark SQL](https://spark.apache.org/docs/2.4.4/sql-programming-guide.html) to the distributed setting above and Spark will effectively auto-generate a MapReduce job for you.  (Spark will even compile the Map string transformation [into highly-optimized bytecode](https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html)).
+
+### ...to Interactive Cluster Computing
+
+Spark is much more (and much less) than a MapReduce platform.  At its core, Spark is a distributed execution engine.  
+
+<center><img src="{{site.baseurl}}/assets/images/simple_spark_diagram.png" width="550px" style="border-radius: 8px; border: 8px solid #ddd;" /></center>
+
+When you run a Spark job:
+
+ * Your machine, the driver, gains interactive control of JVM (and/or Python) processes on worker machines.  (Your local machine might host worker processes when running in local mode).
+ * Code from the driver is transparently serialized (e.g. via [cloudpickle](https://github.com/cloudpipe/cloudpickle)) and sent as bytes to the workers, who execute the code.  The workers might send back a result, or they might hold the result in worker memory as a distributed dataset.  (The workers can even [spill to local disk](https://spark.apache.org/docs/2.4.4/rdd-programming-guide.html#rdd-persistence)).  Library code can be torrented out to workers using the SparkFiles API (see blogpost on making this automatic).
+ * Workers can also write independently (with or without a Reduce step) to a distributed datastore like [AWS S3](https://aws.amazon.com/s3/).  This strategy allows a Spark job to scale network throughput arbitrarily.
+ * Workers can join and leave the cluster as one’s job is executing.  When workers leave (or a task fails), Spark will automatically try to re-compute any lost results using the available workers.
+ * When dealing with input data that is already distributed (e.g. in [Hadoop HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html), [Gluster](https://github.com/kubernetes/examples/tree/386580936e2183b72a08a6a964a85143790ba2a2/staging/spark/spark-gluster), etc), Spark will use data locality information to try to co-locate computation with data.  (This is a central feature of MapReduce).
+ * Above, we noted that Spark can transparently distribute user code (e.g. functions, classes, and libraries) in a job run.  If one needs Spark to distribute a dockerized runtime environment with user library dependencies, Spark offers [integration with Kubernetes](https://spark.apache.org/docs/2.4.4/running-on-kubernetes.html), which will transparently distribute, cache docker images for, and set up dockerized worker environments on a pet-job basis.  This feature provides one of the easiest and most robust solutions for scaling a complete runtime environment from a single user machine to a large cluster of machines.
+ * The overhead of Spark itself?  Spark's task execution latency is largely network-bound, and Spark serializes task results with the most efficient solution available (and for Python uses standard `pickle` and not `cloudpickle`).  Spark carefully manages JVM memory and [affords tuning](https://spark.apache.org/docs/2.4.4/tuning.html#memory-tuning); for Python, memory management affords efficient Spark DataFrame jobs.
+
+## Spark versus ...
+
+### Beam
+
+[Beam](https://beam.apache.org/) seeks to be a software architecture that abstracts away the underlying execution of ETL.  Beam focuses on streaming workflows where [Hadoop](https://hadoop.apache.org/) was originally a de-facto tool: crunching log files that live on disk or that stream directly from a webapp.  Beam is a favorite among Google Cloud sales engineers (via the auto-scaling [Dataflow](https://cloud.google.com/dataflow) product) and Google Research engineers who lack a Python-focused ETL tool due to Google's internal deprecation of MapReduce (public examples: [1](https://github.com/tensorflow/lingvo/blob/ed1f8f899c615e2efc30adf86bdcafdce6df9542/lingvo/tools/beam_utils.py) [2](https://github.com/tensorflow/transform) ).  Beam was first published as [Google Dataflow](http://www.vldb.org/pvldb/vol8/p1792-Akidau.pdf).
+
+Beam offers a [feature matrix](https://beam.apache.org/documentation/runners/capability-matrix/) to roughly compare Beam to others, including Spark.  There are a number of factors that make Spark preferable to Beam.
+
+#### Interactivity as an Extra
+
+To iteratively develop a Beam `Pipeline` in a notebook environment, Beam requires using a [specialized Interactive Runner API](https://github.com/apache/beam/blob/master/sdks/python/apache_beam/runners/interactive/examples/Interactive%20Beam%20Example.ipynb). Cached data from partial execution, if any, is always spilled to disk and requires expensive text-based serialization.  Unlike Spark Dataframes, Beam `PCollection`s are incompatible with [pandas](https://pandas.pydata.org/).  Notebook-based software writing typically helps a user write not only correct code but also discover outlier data cases quickly and interactively.  A Beam user who needs to examine basic statistics (e.g. the range or mean) of a value during a full or partial run of user code must undertake much more effort than a Spark user, who can use either Spark's Dataframe API, or load a piece of data into `pandas` for fast analysis and graphing.
+
+#### Performance 
+
+Beam's core abstractions are effective at isolating the user program from the execution engine... but are these abstractions necessary?  Perhaps yes in some cases, but Beam's abstractions nevertheless appear to impart a considerable performance penalty in [benchmark of common jobs](https://arxiv.org/pdf/1907.08302.pdf).
+
+#### Alpha-level Support For SQL
+
+SQL is often a highly efficient substitute for Python code in ETL jobs: SQL can result in far less code, SQL can be much more readable than a set of Python functions, SQL can be portable to other contexts (e.g. from ETL to a database like [Presto](https://prestodb.io/), [Hive](https://hive.apache.org/), or [BigQuery](https://cloud.google.com/bigquery)), and runtime optimization of SQL queries is both well-studied and built into most engines.  In 2019, Beam provided [alpha-quality SQL support](https://medium.com/weareservian/exploring-beam-sql-on-google-cloud-platform-b6c77f9b4af4) for its Java API **only**.  
+
+#### Per-job Dependencies 
+
+While Beam does offer an affordance for [shipping your own Python library](https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/) with a job, your library must have a `setup.py`, and the library cannot be updated live during job execution (as can be done easily with [`oarphpy.spark` in a Jupyter Notebook]({{site.baseurl}}{% post_url 2020-01-17-atrick %}))). Unlike Spark, Beam does not offer distribution of arbitrary binary files; the user would need to manually copy the file to [the job's scratch directory on distributed storage](https://beam.apache.org/releases/javadoc/2.4.0/org/apache/beam/sdk/options/PipelineOptions.html#getTempLocation--).  
+
+
+
+
+
+
+### Ray
+
+### Dask
+
+
+
+
+
+** include beam, note Google engineers pushing.  Beam is slow paper:  
 
 
 
