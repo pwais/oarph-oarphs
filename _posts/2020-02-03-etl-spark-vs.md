@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "ETL: Spark versus ..."
-date: 2020-02-03 17:00
+date: 2020-02-03 7:00
 author: pwais
 ---
 
@@ -13,27 +13,25 @@ This post describes how [Spark](https://spark.apache.org/) functions as an [ETL]
 
 Spark is popularly known as an open source implementation of [MapReduce](http://stevekrenzel.com/finding-friends-with-mapreduce).  MapReduce was designed as a solution for running analytics on large, **distributed** datasets.  
 
-
 Suppose we have a table of email addresses and we wish to compute the top 10 most frequent domains (e.g. `yahoo.com`) in the table.  If the table lives in an SQL database, we can write a simple SQL query with a `GROUP BY` to solve the problem.  But if the table is very large and stored across several machines, we'd need a MapReduce job: a Map from email address to domain (e.g.  `me@yahoo.com` -> `yahoo.com`) and a Reduce that groups extracted domains and counts them.  
 
-
-In 2004, when MapReduce was first [published](https://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf), the MapReduce solution to this problem was novel and challenges included tuning performance and generalizing the job to support a variety of queries.  By 2012, Spark and other tools have provided [well-optimized SQL interfaces](https://pages.databricks.com/rs/094-YMS-629/images/1211.6176.pdf) to distributed data.  One can apply [Spark SQL](https://spark.apache.org/docs/2.4.4/sql-programming-guide.html) to the distributed setting above and Spark will effectively auto-generate a MapReduce job for you.  (Spark will even compile the Map string transformation [into highly-optimized bytecode](https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html)).
+In 2004, when MapReduce was first [published](https://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf), the MapReduce solution proposed above was novel.  Research on MapReduce focused on tuning performance and support for generic query execution (to obviate the need to write explicit `Map`s and `Reduce`s).  By 2012, Spark and other tools had provided [well-optimized SQL interfaces](https://pages.databricks.com/rs/094-YMS-629/images/1211.6176.pdf) to distributed data.  One could apply [Spark SQL](https://spark.apache.org/docs/2.4.4/sql-programming-guide.html) to the distributed setting described above and Spark would effectively auto-generate a MapReduce job for you.  (Today, Spark will compile the `Map` and `Reduce` operations [into highly-optimized bytecode](https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html) at query time).
 
 ## ...to Interactive Cluster Computing
 
-Spark is much more (and much less) than a MapReduce platform.  At its core, Spark is a distributed execution engine.  
+Spark is much more than a MapReduce platform.  At its core, Spark is a distributed execution engine:  
 
 <center><img src="{{site.baseurl}}/assets/images/simple_spark_diagram.png" width="550px" style="border-radius: 8px; border: 8px solid #ddd;" /></center>
 
 When you run a Spark job:
 
- * Your machine, the driver, gains interactive control of JVM (and/or Python) processes on worker machines.  (Your local machine might host worker processes when running in local mode).
- * Code from the driver is transparently serialized (e.g. via [cloudpickle](https://github.com/cloudpipe/cloudpickle)) and sent as bytes to the workers, who execute the code.  The workers might send back a result, or they might hold the result in worker memory as a distributed dataset.  (The workers can even [spill to local disk](https://spark.apache.org/docs/2.4.4/rdd-programming-guide.html#rdd-persistence)).  Library code can be torrented out to workers using the SparkFiles API (see blogpost on making this automatic).
- * Workers can also write independently (with or without a Reduce step) to a distributed datastore like [AWS S3](https://aws.amazon.com/s3/).  This strategy allows a Spark job to scale network throughput arbitrarily.
- * Workers can join and leave the cluster as one’s job is executing.  When workers leave (or a task fails), Spark will automatically try to re-compute any lost results using the available workers.
- * When dealing with input data that is already distributed (e.g. in [Hadoop HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html), [Gluster](https://github.com/kubernetes/examples/tree/386580936e2183b72a08a6a964a85143790ba2a2/staging/spark/spark-gluster), etc), Spark will use data locality information to try to co-locate computation with data.  (This is a central feature of MapReduce).
- * Above, we noted that Spark can transparently distribute user code (e.g. functions, classes, and libraries) in a job run.  If one needs Spark to distribute a dockerized runtime environment with user library dependencies, Spark offers [integration with Kubernetes](https://spark.apache.org/docs/2.4.4/running-on-kubernetes.html), which will transparently distribute, cache docker images for, and set up dockerized worker environments on a pet-job basis.  This feature provides one of the easiest and most robust solutions for scaling a complete runtime environment from a single user machine to a large cluster of machines.
- * The overhead of Spark itself?  Spark's task execution latency is largely network-bound, and Spark serializes task results with the most efficient solution available (and for Python uses standard `pickle` and not `cloudpickle`).  Spark carefully manages JVM memory and [affords tuning](https://spark.apache.org/docs/2.4.4/tuning.html#memory-tuning); for Python, memory management affords efficient Spark DataFrame jobs.
+ * Your machine, the **Driver**, gains interactive control of JVM (and Python) processes on cluster **Worker** machines.  (Your local machine might host **Worker** processes when running in **Local Mode**).
+ * Code from the Driver is transparently serialized (e.g. via [cloudpickle](https://github.com/cloudpipe/cloudpickle)) and sent as bytes to the Workers, who deserialize and execute the code.  The Workers might send back results, or they might simply hold resulting data in Worker memory as a distributed dataset.  (The Workers can also [spill to local disk](https://spark.apache.org/docs/2.4.4/rdd-programming-guide.html#rdd-persistence)).  The user's library code (e.g. Java JARs and Python packages) can be torrented out to Workers through the **SparkFiles** API (and usage of this API [can be automated using `oarphpy`]({{site.baseurl}}{% post_url 2020-02-03-atrick %})).
+ * Each Worker can independently read and write to a distributed datastore like [AWS S3](https://aws.amazon.com/s3/).  This many-to-many strategy allows a job to achieve arbitrarily high levels of total I/O.
+ * Workers can join and leave the cluster as one’s job is executing.  When workers leave (or a task fails), Spark will automatically try to re-compute any lost results using the available Workers.
+ * When dealing with input data that is already distributed (e.g. in [Hadoop HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html), [Gluster](https://github.com/kubernetes/examples/tree/386580936e2183b72a08a6a964a85143790ba2a2/staging/spark/spark-gluster), etc), Spark will use data locality information to try to co-locate computation with data.  (This is a central feature of MapReduce: move computation to the data).
+ * Above, we noted that Spark can transparently distribute user code (e.g. functions, classes, and libraries) with each job run.  If one needs to distribute a [dockerized runtime environment](https://docs.docker.com/get-started/) with user dependencies, Spark offers [integration with Kubernetes](https://spark.apache.org/docs/2.4.4/running-on-kubernetes.html), which will transparently distribute, cache docker images for, and set up dockerized Workers on a per-job basis.  This feature provides one of the easiest and most robust solutions for scaling a complete runtime environment from a single machine to a cluster.
+ * The overhead of Spark itself?  Spark's task execution latency adds mere milliseconds to network latency, and Spark serializes task results with the most efficient solution available (and for Python uses standard `pickle` and not `cloudpickle`).  Spark carefully manages JVM memory, reserving some for user code and some for buffering intermediate results.  (The user can [tune](https://spark.apache.org/docs/2.4.4/tuning.html#memory-tuning) these settings on a per-job basis).  
 
 
 
@@ -60,7 +58,7 @@ SQL is often a highly efficient substitute for Python code in ETL jobs: SQL can 
 
 ### Per-job Dependencies 
 
-While Beam does offer an affordance for [shipping your own Python library](https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/) with a job, your library must have a `setup.py`, and the library cannot be updated live during job execution (as can be done easily with [`oarphpy.spark` in a Jupyter Notebook]({{site.baseurl}}{% post_url 2020-02-04-atrick %}))). Unlike Spark, Beam does not offer distribution of arbitrary binary files; the user would need to manually copy the file to [the job's scratch directory on distributed storage](https://beam.apache.org/releases/javadoc/2.4.0/org/apache/beam/sdk/options/PipelineOptions.html#getTempLocation--).  
+While Beam does offer an affordance for [shipping your own Python library](https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/) with a job, your library must have a `setup.py`, and the library cannot be updated live during job execution (as can be done easily with [`oarphpy.spark` in a Jupyter Notebook]({{site.baseurl}}{% post_url 2020-02-03-atrick %}))). Unlike Spark, Beam does not offer distribution of arbitrary binary files; the user would need to manually copy the file to [the job's scratch directory on distributed storage](https://beam.apache.org/releases/javadoc/2.4.0/org/apache/beam/sdk/options/PipelineOptions.html#getTempLocation--).  
 
 
 
