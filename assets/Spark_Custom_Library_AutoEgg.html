@@ -13077,7 +13077,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Automagically-Shipping-Custom-Libraries-in-Spark-Using-OarphPy">Automagically Shipping Custom Libraries in Spark Using OarphPy<a class="anchor-link" href="#Automagically-Shipping-Custom-Libraries-in-Spark-Using-OarphPy">&#182;</a></h1><p>Iterative development with <em>simple</em> user code in Spark is easy: just declare some functions, create an <a href="https://spark.apache.org/docs/2.4.4/rdd-programming-guide.html#resilient-distributed-datasets-rdds">RDD</a> or <a href="https://spark.apache.org/docs/2.4.4/sql-programming-guide.html#datasets-and-dataframes">DataFrame</a> and go!  But if you need to iterate on a whole <em>library</em> of user code, some careful setup and configuraton is necessary.</p>
+<h1 id="Automagically-Shipping-Custom-Libraries-in-Spark-Using-OarphPy">Automagically Shipping Custom Libraries in Spark Using OarphPy<a class="anchor-link" href="#Automagically-Shipping-Custom-Libraries-in-Spark-Using-OarphPy">&#182;</a></h1><p>Iterative development with <em>simple</em> user code in Spark is easy: just declare some functions, create an <a href="https://spark.apache.org/docs/2.4.4/rdd-programming-guide.html#resilient-distributed-datasets-rdds">RDD</a> or <a href="https://spark.apache.org/docs/2.4.4/sql-programming-guide.html#datasets-and-dataframes">DataFrame</a> and go!  (See Spark's own demos <a href="https://spark.apache.org/examples.html">here</a>).   However, if you need to iterate on a whole <em>library</em> of user code, some careful setup and configuraton is necessary.</p>
 <p><code>oarphpy</code> offers helpful automation: <code>oarphpy</code>-managed Spark sessions automagically include a Python Egg containing the entire library wrapping the session instantiator.  You can also just point <code>oarphpy</code> at a specific directory and go.  For notebooks, <code>oarphpy</code> supports live library code updates, without having to restart the Spark session or notebook kernel.</p>
 <p>This notebook demonstrates using <code>oarphpy</code>-managed Spark with a toy library of user code: a web scraper.</p>
 
@@ -13087,9 +13087,9 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Setup">Setup<a class="anchor-link" href="#Setup">&#182;</a></h2><p>To run this notebook locally, try using the <code>oarphpy/full</code> dockerized environment:
-<code>docker run -it --rm --net=host oarphpy/full:0.0.2 jupyter notebook --allow-root</code></p>
-<p><strong>COLAB ONLY</strong> If you're running this notebook in <a href="https://colab.research.google.com/">Google Colab</a>, you'll need to install <code>oarphpy</code>, Spark, and Java.  Running the cell below will take care of that for you.  You might need to restart the runtime (Use the menu option: <em>Runtime</em> &gt; <em>Restart runtime ...</em>) in order for Colab to recognize the new modules.</p>
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup">&#182;</a></h2><p>To run this notebook locally, try using the <code>oarphpy/full</code> dockerized environment:</p>
+<p><code>docker run -it --rm --net=host oarphpy/full:0.0.2 jupyter notebook --allow-root</code></p>
+<p><strong>Google Colab</strong>  You can also <a href="https://colab.sandbox.google.com/github/pwais/oarphpy/blob/master/notebooks/Spark_Custom_Library_AutoEgg.ipynb">run this notebook in Google Colab</a>.  In the Colab environment, you'll need to install <code>oarphpy</code>, Spark, and Java.  Running the cell below will take care of that for you.  You might need to restart the runtime (Use the menu option: <em>Runtime</em> &gt; <em>Restart runtime ...</em>) in order for Colab to recognize the new modules.</p>
 
 </div>
 </div>
@@ -13102,7 +13102,7 @@ div#notebook {
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="k">if</span> <span class="s1">&#39;google.colab&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
-    <span class="o">!</span>pip install oarphpy<span class="o">[</span>spark<span class="o">]==</span><span class="m">0</span>.0.2
+    <span class="o">!</span>pip install oarphpy<span class="o">[</span>spark<span class="o">]==</span><span class="m">0</span>.0.3
     <span class="o">!</span>pip install <span class="nv">pyspark</span><span class="o">==</span><span class="m">2</span>.4.4
     <span class="o">!</span>apt-get update <span class="o">&amp;&amp;</span> apt-get install -y openjdk-8-jdk
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;JAVA_HOME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;/usr/lib/jvm/java-8-openjdk-amd64&#39;</span>
@@ -13187,7 +13187,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Now let's write the library.  Here's our webpage-scraping code, which simply uses <code>BeautifulSoup</code> to parse image urls and tags from the pages:</p>
+<p>Now let's write the library.  Here's our webpage-scraping code, which simply uses <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> to parse image urls and tags from the pages:</p>
 
 </div>
 </div>
@@ -13914,6 +13914,19 @@ Scraped 5 images
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Testing">Testing<a class="anchor-link" href="#Testing">&#182;</a></h1><p>The features above are tested extensively:</p>
+<ul>
+<li>There are tests where the calling script is <a href="https://github.com/pwais/oarphpy/blob/4ba613c3ec8ce030e241bd306bac0cb944bdc0e1/oarphpy_test/test_spark.py#L54">external</a> and <a href="https://github.com/pwais/oarphpy/blob/4ba613c3ec8ce030e241bd306bac0cb944bdc0e1/oarphpy_test/test_spark.py#L65">internal</a> to the user library.</li>
+<li>There is a <a href="https://github.com/pwais/oarphpy/blob/4ba613c3ec8ce030e241bd306bac0cb944bdc0e1/oarphpy_test/test_spark.py#L77">notebook-based test</a> of all features shown in this notebook.</li>
+<li>All of the above is tested in both <code>oarphpy</code>'s custom <code>full</code> environment <a href="https://github.com/pwais/oarphpy/blob/master/README.md#dockerized-development-environments">as well as a vanilla Spark environment</a>.</li>
+</ul>
+
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">

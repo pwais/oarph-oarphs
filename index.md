@@ -1,8 +1,9 @@
 ---
 layout: default
+title: Oarph Oarphs
 ---
 
-A place for Oarph to Oarph.
+A place for Oarph to Oarph (sometimes about [`oarphpy`](https://github.com/pwais/oarphpy)).
 
 ## Posts
 
