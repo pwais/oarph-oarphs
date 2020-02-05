@@ -1,7 +1,13 @@
 ---
 layout: default
+title: Oarph Oarphs
 ---
 
+A place for Oarph to Oarph (sometimes about [`oarphpy`](https://github.com/pwais/oarphpy)).
+
+## Posts
+
+<div style="max-width:80%">
 <ul>
   {% for post in site.posts %}
     <li>
@@ -9,5 +15,5 @@ layout: default
     </li>
   {% endfor %}
 </ul>
+</div>
 
-<img src="{{site.baseurl}}/assets/images/oarphoarph_alpha.png" width="150" height="150" />
