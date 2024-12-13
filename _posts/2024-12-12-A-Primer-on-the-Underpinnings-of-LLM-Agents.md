@@ -81,7 +81,7 @@ reasoning_: one or more sentences where the speaker "shows her work."  See a key
 <center>
 <img 
   alt="Chain-of-Thought prompting from Wei et all" 
-  src="{{site.baseurl}}/assets/images/cot_prompting_wei_et_all.jpg"
+  src="{{site.baseurl}}/assets/images/cot_prompting_wei_et_all2.jpg"
   width="550px" style="border-radius: 8px; border: 8px solid #ddd;" />
 </center>
 
@@ -126,7 +126,7 @@ as [researchers are still actively debating whether LLMs actually do reasoning](
 <center>
 <img 
   alt="Yann on reasoning" 
-  src="{{site.baseurl}}/assets/images/yann-reasoning.jpg"
+  src="{{site.baseurl}}/assets/images/yann-reasoning2.jpg"
   width="550px" style="border-radius: 8px; border: 8px solid #ddd;" />
 </center>
 
@@ -160,7 +160,7 @@ rise to LLM Agents that are successful at solving complex tasks:
 <center>
 <img 
   alt="ReAct from Yao et all" 
-  src="{{site.baseurl}}/assets/images/react_overview_yao_et_al.jpg"
+  src="{{site.baseurl}}/assets/images/react_overview_yao_et_al2.jpg"
   width="550px" style="border-radius: 8px; border: 8px solid #ddd;" />
 </center>
 
@@ -195,7 +195,7 @@ of the overall system:
 <center>
 <img 
   alt="Retrieval-Augmented-Generation with Vector Database from Gao et all" 
-  src="{{site.baseurl}}/assets/images/rag-with-index.jpg"
+  src="{{site.baseurl}}/assets/images/rag-with-index2.jpg"
   width="550px" style="border-radius: 8px; border: 8px solid #ddd;" />
 </center>
 
