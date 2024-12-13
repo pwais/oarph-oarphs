@@ -10,3 +10,4 @@ bundle exec jekyll serve --port 4434 --host "ur.ip"
 
 To update jekyll, delete the `Gemfile.lock` and run (in docker) `bundle update`.
 
+NB: Git LFS does not work with Github pages :((( So just `git add` new images.

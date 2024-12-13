@@ -1,4 +1,0 @@
-assets/images/cot_prompting_wei_et_all.jpg filter=lfs diff=lfs merge=lfs -text
-assets/images/rag-with-index.jpg filter=lfs diff=lfs merge=lfs -text
-assets/images/react_overview_yao_et_al.jpg filter=lfs diff=lfs merge=lfs -text
-assets/images/yann-reasoning.jpg filter=lfs diff=lfs merge=lfs -text
