@@ -115,7 +115,7 @@ But can LLMs reason _reliably_?  As described in the previous section, most LLMs
 a single _highly-probable_ answer for any given input.  But that generated
 answer can be wrong!  In the context of "chain-of-thought" prompting, some
 research has explored measures of [self-consistency](https://openreview.net/pdf?id=1PL1NIMMrw),
-where the LLM generates **several** explanations (i.e. chain-of-though answer sequences)
+where the LLM generates **several** explanations (i.e. chain-of-thought answer sequences)
 and some simple aggregation (e.g. majority vote on a final component of the answer) can help
 boost correctness on benchmarks.  However, the issue of LLM reliability (and thus
 LLM _Agent_ reliability) is still an active area of research.
@@ -206,7 +206,7 @@ At query time, the LLM Agent will compute similar embedding vector(s) for the qu
 vector(s) against all vectors in the database.  (Note that this [vector search](https://en.wikipedia.org/wiki/Vector_database)
 operation is well-studied, is very fast, and [there are ubiquitous implementations 
 available](#vector-db)).  The matched vectors thus indicate relevant "documents" 
-(e.g. specific chat history messages, individual webpage snippets, etc.) that should be included 
+(e.g. specific chat history messages, individual web page snippets, etc.) that should be included 
 as context to the LLM that generates the agent's final response (and/or action).  Therefore, 
 the "retrieved" documents are added to the LLM input to "augment" the "generated" final response.
 
@@ -215,7 +215,7 @@ the "retrieved" documents are added to the LLM input to "augment" the "generated
 #### Optimizing Agents
 
 For most supervised learning systems (including LLMs), the most effective way to 
-optimize performance is grow the training data set and to re-train the model. 
+optimize performance is to grow the training data set and to re-train the model. 
 However, this approach is cost prohibitive for most LLM Agent developers
 because:
  * basic training [can cost as little as tens of US Dollars (USD) when done very, very efficiently](https://www.youtube.com/watch?v=l8pRSuU81PU) 
