@@ -8,3 +8,5 @@ bundle install
 bundle exec jekyll serve --port 4434 --host "ur.ip"
 ```
 
+To update jekyll, delete the `Gemfile.lock` and run (in docker) `bundle update`.
+
